@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: postgres
+  template:
+    metadata:
+      labels:
+        component: postgres
+    spec:
+      # here we tell k8 to create the storage
+      # Gets this container the storage defined in our claim
+      # k8 will use computer storage if local to setup the storage
+      volumes:
+        - name: postgres-storage
+          persistentVolumeClaim:
+            claimName: database-persistent-volume-claim
+      containers:
+        - name: postgres
+          image: postgres
+          ports:
+            - containerPort: 5432
+          # How to use storage we have access to in the container
+          # i.e. find the storage we just asked k8 for ^^
+          volumeMounts:
+            - name: postgres-storage # matches the storage name ^^ and that storage is used for this mount
+              # We define where inside the container this storage should be made available
+              # since postgress by default stores data in /var/lib/postgresql/data folder thats what we define below
+              # So all data stored in the path below will be stored inside our volume on our computer!
+              mountPath: /var/lib/postgresql/data
+              # Where within the PVC our storage can be found i.e. below will be found inside postgres folder
+              subPath: postgres
+          env:
+            - name: POSTGRES_PASSWORD # this is specific to the postgres image and the env var it uses
+              valueFrom:
+                secretKeyRef:
+                  name: pgpassword # name of Secret object which k8 will open up
+                  key: PGPASSWORD # the specific key within the Secret object that will give us ou
+# we could have a postgress cluster to increase availability
+# if we had more than one replica and had volumes setup, then we'd have 2 contianers trying to access the same volume
+# for this to work we'd need to have some sort of intermdiary to manage db connections for each of the pods

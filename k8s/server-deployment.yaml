@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: server-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      component: server
+  # Pod definiton
+  template:
+    metadata:
+      labels:
+        component: server
+    # Customising Pod behaviour, only a single container needed in this Pod
+    spec:
+      containers:
+        - name: server
+          image: thexyman/multi-server
+          ports:
+            - containerPort: 5000
+          env:
+            - name: REDIS_HOST
+              value: redis-cluster-ip-service # the name of the cluster ip for Redis
+            - name: REDIS_PORT
+              value: '6379' # the port on which redis and its Service is configured to listen
+            - name: PGUSER
+              value: postgres
+            - name: PGHOST
+              value: postgres-cluster-ip-service
+            - name: PGPORT
+              value: '5432' # the port on which postgres and its Service is configured to listen
+            - name: PGDATABASE
+              value: postgres
+            - name: PGPASSWORD # the env the app will use as defined in our code
+              valueFrom:
+                secretKeyRef:
+                  name: pgpassword # name of Secret object which k8 will open up
+                  key: PGPASSWORD # the specific key within the Secret object that will give us our secret value
+
+# k8 command => kubectl create secret generic pgpassword --from-literal PGPASSWORD=1234asdf

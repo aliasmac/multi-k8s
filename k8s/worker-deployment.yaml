@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: worker
+  # Pod definiton
+  template:
+    metadata:
+      labels:
+        component: worker
+    # Customising Pod behaviour, only a single container needed in this Pod
+    spec:
+      containers:
+        - name: worker
+          image: thexyman/multi-worker
+          env:
+            - name: REDIS_HOST
+              value: redis-cluster-ip-service # the name of the cluster ip for Redis
+            - name: REDIS_PORT
+              value: '6379' # the port on which redis is configured to listen, needs to be string
+# need to add env for redis
+#remember the multi worker does not have any incoming connection req,

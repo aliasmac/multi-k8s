@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-cluster-ip-service
+spec:
+  type: ClusterIP
+  selector:
+    component: redis
+  ports:
+    - port: 6379 # To get at redis, just hit the service on 6379
+      targetPort: 6379 # the port exposed on redis image that traffic will be routes through this service
+

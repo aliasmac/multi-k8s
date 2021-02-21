@@ -1,0 +1,34 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-service
+  annotations:
+    # this tells k8 to create controller based on nginx version
+    kubernetes.io/ingress.class: nginx
+    # this ensures that we can use regex to accurately specify paths using regex
+    nginx.ingress.kubernetes.io/use-regex: 'true'
+    # This configures how the nginx behaves
+    # After sending request to server it will rewrite the uri by removing the /api
+    # similar to how we done with eb setup
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+spec:
+  # this tells nginx how to route
+  rules:
+    - http:
+        paths:
+          # we're defining 2 paths that traffic can be routed via
+          - path: /?(.*)
+            pathType: Prefix
+            # the service to route to as defined in cluster ip
+            backend:
+              service:
+                name: client-cluster-ip-service
+                port:
+                  number: 3000
+          - path: /api/?(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: server-cluster-ip-service
+                port:
+                  number: 5000
