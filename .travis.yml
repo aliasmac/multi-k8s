@@ -1,0 +1,16 @@
+# coz we're making use of docker
+sudo: required
+services:
+  - docker
+before_install:
+  - openssl aes-256-cbc -K $encrypted_9f3b5599b056_key -iv $encrypted_9f3b5599b056_iv -in service-account.json.enc -out service-account.json -d
+  # downloads and installs sdk to the Travis instance assigned to us on build and a specific location
+  - curl https://sdk.cloud.google.com | bash > /dev/null;
+  # looks at the default location at which the sdk is installed and applies some additional
+  # config to our travis shell so that the sdk works properly
+  - source $HOME/google-cloud-sdk/path.bash.inc
+  # install and update kubectl inside of our travis shell/env
+  - gcloud components update kubectl
+  # Next we need to authorise ourself with the sdk i.e. link our account
+  # similar to how we created an IAM user on AWS that assigned perms, here we pass our authd user
+  - gcloud auth activate-service-account --key-file service-account.json
