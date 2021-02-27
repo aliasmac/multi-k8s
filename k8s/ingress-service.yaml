@@ -33,6 +33,14 @@
 #                 port:
 #                   number: 5000
 
+# This works
+# Just for anyone else who runs across this issue, this happened to me.
+# The notes say to use apiVersion: networking.k8s.io/v1 but you (or at least me)
+# have to use  apiVersion: networking.k8s.io/v1beta1  for deploying on GKE.
+# It seems to be because the default version used by GKE is v1.16 and networking.k8s.io/v1
+# isn't available until v1.19. Otherwise, I ran into the issue of the ingress-service not
+# getting created
+
 apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
 metadata:
