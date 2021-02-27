@@ -2,6 +2,10 @@
 sudo: required
 services:
   - docker
+env:
+  global:
+    # ensures the sdk doesn't try to display any prompts for user input
+    - CLOUDSDK_CORE_DISABLE_PROMPTS=1
 before_install:
   - openssl aes-256-cbc -K $encrypted_9f3b5599b056_key -iv $encrypted_9f3b5599b056_iv -in service-account.json.enc -out service-account.json -d
   # downloads and installs sdk to the Travis instance assigned to us on build and a specific location
@@ -13,4 +17,22 @@ before_install:
   - gcloud components update kubectl
   # Next we need to authorise ourself with the sdk i.e. link our account
   # similar to how we created an IAM user on AWS that assigned perms, here we pass our authd user
+  # note that service-account.json comes from encrypted file above
   - gcloud auth activate-service-account --key-file service-account.json
+  # tell gcloud what project and what zone in our account to operate on
+  - gcloud config set project multi-k8s-306110
+  - gcloud config set compute/zone europe-west2-a
+  # tell glouc what cluster to work with
+  - gcloud container clusters get-credentials multi-cluster
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+  - docker build -t thexyman/react-test -f ./client/Dockerfile.dev ./client
+script:
+  # we define -- --coverage so that the tests exit with a coverage report to signal to travis everything is a ok
+  # the commands after '...thexyman/react-test' is the command normally used to run tests
+  - docker run -e CI=true thexyman/react-test npm test -- --coverage
+deploy:
+  provider: script
+  # deploy.sh executes the build, tag, push to docker and then k8 configuration
+  script: bash ./deploy.sh
+  on:
+    branch: master
